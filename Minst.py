@@ -42,7 +42,8 @@ def load_mnist_labels(filename):
     return labels
 
 # Định nghĩa đường dẫn đến các file MNIST
-dataset_path = r"C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
+# dataset_path = r"C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
+dataset_path = os.path.dirname(os.path.abspath(__file__))
 train_images_path = os.path.join(dataset_path, "train-images.idx3-ubyte")
 train_labels_path = os.path.join(dataset_path, "train-labels.idx1-ubyte")
 test_images_path = os.path.join(dataset_path, "t10k-images.idx3-ubyte")
