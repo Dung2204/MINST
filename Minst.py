@@ -239,82 +239,83 @@ mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
 mlflow.set_experiment("MNIST")
 # 3️⃣ HUẤN LUYỆN MÔ HÌNH
 with st.expander("📌 HUẤN LUYỆN MÔ HÌNH", expanded=True):
-    st.header("📌 9. Huấn luyện các mô hình phân loại")
+    with mlflow.start_run():
+        st.header("📌 9. Huấn luyện các mô hình phân loại")
 
-    # Lựa chọn mô hình
-    model_option = st.radio("🔹 Chọn mô hình huấn luyện:", ("Decision Tree", "SVM"))
+        # Lựa chọn mô hình
+        model_option = st.radio("🔹 Chọn mô hình huấn luyện:", ("Decision Tree", "SVM"))
 
-    if model_option == "Decision Tree":
-        st.subheader("🌳 Decision Tree Classifier")
-        
-        # Lựa chọn tham số cho Decision Tree
-        criterion = st.selectbox("Chọn tiêu chí phân nhánh:", ["gini", "entropy"])
-        max_depth = st.slider("Chọn độ sâu tối đa của cây:", min_value=1, max_value=20, value=5)
-
-        if st.button("🚀 Huấn luyện mô hình"):
-            with mlflow.start_run():
-                dt_model = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, random_state=42)
-                dt_model.fit(X_train, y_train)
-                y_val_pred_dt = dt_model.predict(X_val)
-                accuracy_dt = accuracy_score(y_val, y_val_pred_dt)
-
-                mlflow.log_param("model_type", "Decision Tree")
-                mlflow.log_param("criterion", criterion)
-                mlflow.log_param("max_depth", max_depth)
-                mlflow.log_metric("accuracy", accuracy_dt)
-
-                # Lưu mô hình vào MLflow
-                mlflow.sklearn.log_model(dt_model, "decision_tree_model")
-
-                st.session_state["selected_model_type"] = "Decision Tree"
-                st.session_state["trained_model"] = dt_model 
-                st.session_state["X_train"] = X_train   
-
-                st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_dt:.4f}`")
-
-                # Hiển thị kết quả bằng biểu đồ
-                fig, ax = plt.subplots(figsize=(6, 4))
-                sns.barplot(x=["Decision Tree"], y=[accuracy_dt], palette="Blues", ax=ax)
-                ax.set_ylim(0, 1)
-                ax.set_title("Độ chính xác của Decision Tree")
-                ax.set_ylabel("Accuracy")
-                st.pyplot(fig)
-
-    elif model_option == "SVM":
-        st.subheader("🌀 Support Vector Machine (SVM)")
+        if model_option == "Decision Tree":
+            st.subheader("🌳 Decision Tree Classifier")
             
-            # Lựa chọn tham số cho SVM
-        kernel = st.selectbox("Chọn kernel:", ["linear", "poly", "rbf", "sigmoid"])
-        C = st.slider("Chọn giá trị C (điều chỉnh mức độ regularization):", min_value=0.1, max_value=10.0, value=1.0)
+            # Lựa chọn tham số cho Decision Tree
+            criterion = st.selectbox("Chọn tiêu chí phân nhánh:", ["gini", "entropy"])
+            max_depth = st.slider("Chọn độ sâu tối đa của cây:", min_value=1, max_value=20, value=5)
 
-        if st.button("🚀 Huấn luyện mô hình"):
-            with mlflow.start_run(): 
-                svm_model = SVC(kernel=kernel, C=C, random_state=42)
-                svm_model.fit(X_train, y_train)
-                y_val_pred_svm = svm_model.predict(X_val)
-                accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
+            if st.button("🚀 Huấn luyện mô hình"):
+                with mlflow.start_run():
+                    dt_model = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, random_state=42)
+                    dt_model.fit(X_train, y_train)
+                    y_val_pred_dt = dt_model.predict(X_val)
+                    accuracy_dt = accuracy_score(y_val, y_val_pred_dt)
 
-                mlflow.log_param("model_type", "SVM")
-                mlflow.log_param("kernel", kernel)
-                mlflow.log_param("C_value", C)
-                mlflow.log_metric("accuracy", accuracy_svm)
+                    mlflow.log_param("model_type", "Decision Tree")
+                    mlflow.log_param("criterion", criterion)
+                    mlflow.log_param("max_depth", max_depth)
+                    mlflow.log_metric("accuracy", accuracy_dt)
 
                     # Lưu mô hình vào MLflow
-                mlflow.sklearn.log_model(svm_model, "svm_model")
+                    mlflow.sklearn.log_model(dt_model, "decision_tree_model")
 
-                st.session_state["selected_model_type"] = "SVM"
-                st.session_state["trained_model"] = svm_model  
-                st.session_state["X_train"] = X_train
+                    st.session_state["selected_model_type"] = "Decision Tree"
+                    st.session_state["trained_model"] = dt_model 
+                    st.session_state["X_train"] = X_train   
 
-                st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_svm:.4f}`")
+                    st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_dt:.4f}`")
 
                     # Hiển thị kết quả bằng biểu đồ
-                fig, ax = plt.subplots(figsize=(6, 4))
-                sns.barplot(x=["SVM"], y=[accuracy_svm], palette="Reds", ax=ax)
-                ax.set_ylim(0, 1)
-                ax.set_title("Độ chính xác của SVM")
-                ax.set_ylabel("Accuracy")
-                st.pyplot(fig)
+                    fig, ax = plt.subplots(figsize=(6, 4))
+                    sns.barplot(x=["Decision Tree"], y=[accuracy_dt], palette="Blues", ax=ax)
+                    ax.set_ylim(0, 1)
+                    ax.set_title("Độ chính xác của Decision Tree")
+                    ax.set_ylabel("Accuracy")
+                    st.pyplot(fig)
+
+        elif model_option == "SVM":
+            st.subheader("🌀 Support Vector Machine (SVM)")
+                
+                # Lựa chọn tham số cho SVM
+            kernel = st.selectbox("Chọn kernel:", ["linear", "poly", "rbf", "sigmoid"])
+            C = st.slider("Chọn giá trị C (điều chỉnh mức độ regularization):", min_value=0.1, max_value=10.0, value=1.0)
+
+            if st.button("🚀 Huấn luyện mô hình"):
+                with mlflow.start_run(): 
+                    svm_model = SVC(kernel=kernel, C=C, random_state=42)
+                    svm_model.fit(X_train, y_train)
+                    y_val_pred_svm = svm_model.predict(X_val)
+                    accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
+
+                    mlflow.log_param("model_type", "SVM")
+                    mlflow.log_param("kernel", kernel)
+                    mlflow.log_param("C_value", C)
+                    mlflow.log_metric("accuracy", accuracy_svm)
+
+                        # Lưu mô hình vào MLflow
+                    mlflow.sklearn.log_model(svm_model, "svm_model")
+
+                    st.session_state["selected_model_type"] = "SVM"
+                    st.session_state["trained_model"] = svm_model  
+                    st.session_state["X_train"] = X_train
+
+                    st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_svm:.4f}`")
+
+                        # Hiển thị kết quả bằng biểu đồ
+                    fig, ax = plt.subplots(figsize=(6, 4))
+                    sns.barplot(x=["SVM"], y=[accuracy_svm], palette="Reds", ax=ax)
+                    ax.set_ylim(0, 1)
+                    ax.set_title("Độ chính xác của SVM")
+                    ax.set_ylabel("Accuracy")
+                    st.pyplot(fig)
 
 
 # 3️⃣ ĐÁNH GIÁ MÔ HÌNH
