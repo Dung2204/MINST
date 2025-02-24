@@ -18,10 +18,12 @@ from PIL import Image
 from collections import Counter
 import toml
 import mlflow
-mlflow.set_tracking_uri(st.secrets["MLFLOW_TRACKING_URI"])
-os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["MLFLOW_TRACKING_USERNAME"]
-os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["MLFLOW_TRACKING_PASSWORD"]
+# ========== PHẦN QUAN TRỌNG: LẤY THÔNG TIN TỪ STREAMLIT SECRETS ==========
+os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["mlflow"]["MLFLOW_TRACKING_USERNAME"]
+os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["mlflow"]["MLFLOW_TRACKING_PASSWORD"]
 
+mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
+mlflow.set_experiment("MNIST")
 
 @st.cache_data  # Lưu cache để tránh load lại dữ liệu mỗi lần chạy lại Streamlit
 def get_sampled_pixels(images, sample_size=100_000):
@@ -406,9 +408,9 @@ with st.expander("📌DỰ ĐOÁN KẾT QUẢ", expanded=True):
 
 
 st.markdown("---")
-# if st.button("Mở MLflow UI"):
-#         mlflow_url = "https://dagshub.com/huykibo/streamlit_mlflow.mlflow/#/experiments/0"
-#         st.markdown(f'**[Click vào đây để mở MLflow UI]({mlflow_url})**')
+if st.button("Mở MLflow UI"):
+        mlflow_url = "https://dagshub.com/Dung2204/MINSTtest.mlflow/#/experiments/0?searchFilter=&orderByKey=attributes.start_time&orderByAsc=false&startTime=ALL&lifecycleFilter=Active&modelVersionFilter=All+Runs&datasetsFilter=W10%3D"
+        st.markdown(f'**[Click vào đây để mở MLflow UI]({mlflow_url})**')
 
 
 
