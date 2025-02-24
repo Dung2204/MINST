@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import mlflow
 import cv2
 import numpy as np
 import pandas as pd
@@ -17,6 +18,13 @@ from sklearn.metrics import accuracy_score, classification_report, ConfusionMatr
 from PIL import Image
 from collections import Counter
 
+
+# ========== PHẦN QUAN TRỌNG: LẤY THÔNG TIN TỪ STREAMLIT SECRETS ==========
+os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["mlflow"]["MLFLOW_TRACKING_USERNAME"]
+os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["mlflow"]["MLFLOW_TRACKING_PASSWORD"]
+
+mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
+mlflow.set_experiment("MNIST")
 
 @st.cache_data  # Lưu cache để tránh load lại dữ liệu mỗi lần chạy lại Streamlit
 def get_sampled_pixels(images, sample_size=100_000):
