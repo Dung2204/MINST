@@ -31,10 +31,6 @@ def mlflow_input():
     mlflow.set_experiment("Classification")
     
 
-# ========== PHẦN QUAN TRỌNG: LẤY THÔNG TIN TỪ STREAMLIT SECRETS ==========
-os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["mlflow"]["MLFLOW_TRACKING_USERNAME"]
-os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["mlflow"]["MLFLOW_TRACKING_PASSWORD"]
-
 mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
 mlflow.set_experiment("MNIST")
 
@@ -419,12 +415,6 @@ with st.expander("📌DỰ ĐOÁN KẾT QUẢ", expanded=True):
                     st.error(f"🚨 Ảnh không có số đặc trưng đúng ({image.shape[1]} thay vì {X_train_shape}). Hãy kiểm tra lại dữ liệu đầu vào!")
             else:
                 st.error("🚨 Dữ liệu huấn luyện không tìm thấy. Hãy huấn luyện mô hình trước khi dự đoán.")
-
-
-st.markdown("---")
-if st.button("Mở MLflow UI"):
-        mlflow_url = "https://dagshub.com/Dung2204/MINSTtest.mlflow/#/experiments/0?searchFilter=&orderByKey=attributes.start_time&orderByAsc=false&startTime=ALL&lifecycleFilter=Active&modelVersionFilter=All+Runs&datasetsFilter=W10%3D"
-        st.markdown(f'**[Click vào đây để mở MLflow UI]({mlflow_url})**')
 
 
 
