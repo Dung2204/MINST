@@ -7,4 +7,3 @@ scikit-learn
 opencv-python-headless
 pillow
 altair
-mlflow
