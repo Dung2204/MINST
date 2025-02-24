@@ -18,6 +18,19 @@ from PIL import Image
 from collections import Counter
 import toml
 import mlflow
+def mlflow_input():
+    #st.title("🚀 MLflow DAGsHub Tracking với Streamlit")
+    
+    DAGSHUB_MLFLOW_URI = "https://dagshub.com/Dung2204/MINSTtest.mlflow"
+    st.session_state['mlflow_url']=DAGSHUB_MLFLOW_URI
+    mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+
+    os.environ["MLFLOW_TRACKING_USERNAME"] = "Dung2204"
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = "302998c33f3480768446c6da21436716b7c773e1"
+
+    mlflow.set_experiment("Classification")
+    
+
 # ========== PHẦN QUAN TRỌNG: LẤY THÔNG TIN TỪ STREAMLIT SECRETS ==========
 os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["mlflow"]["MLFLOW_TRACKING_USERNAME"]
 os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["mlflow"]["MLFLOW_TRACKING_PASSWORD"]
@@ -416,3 +429,5 @@ if st.button("Mở MLflow UI"):
 
 # # # cd "C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
 
+
+   
