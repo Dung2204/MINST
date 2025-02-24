@@ -16,23 +16,23 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, ConfusionMatrixDisplay
 from PIL import Image
 from collections import Counter
-import toml
-import mlflow
-def mlflow_input():
-    #st.title("🚀 MLflow DAGsHub Tracking với Streamlit")
+# import toml
+# import mlflow
+# def mlflow_input():
+#     #st.title("🚀 MLflow DAGsHub Tracking với Streamlit")
     
-    DAGSHUB_MLFLOW_URI = "https://dagshub.com/Dung2204/MINSTtest.mlflow"
-    st.session_state['mlflow_url']=DAGSHUB_MLFLOW_URI
-    mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
+#     DAGSHUB_MLFLOW_URI = "https://dagshub.com/Dung2204/MINSTtest.mlflow"
+#     st.session_state['mlflow_url']=DAGSHUB_MLFLOW_URI
+#     mlflow.set_tracking_uri(DAGSHUB_MLFLOW_URI)
 
-    os.environ["MLFLOW_TRACKING_USERNAME"] = "Dung2204"
-    os.environ["MLFLOW_TRACKING_PASSWORD"] = "302998c33f3480768446c6da21436716b7c773e1"
+#     os.environ["MLFLOW_TRACKING_USERNAME"] = "Dung2204"
+#     os.environ["MLFLOW_TRACKING_PASSWORD"] = "302998c33f3480768446c6da21436716b7c773e1"
 
-    mlflow.set_experiment("Classification")
+#     mlflow.set_experiment("Classification")
     
 
-mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
-mlflow.set_experiment("MNIST")
+# mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
+# mlflow.set_experiment("MNIST")
 
 @st.cache_data  # Lưu cache để tránh load lại dữ liệu mỗi lần chạy lại Streamlit
 def get_sampled_pixels(images, sample_size=100_000):
@@ -231,11 +231,11 @@ with st.expander("🖼️ XỬ LÝ DỮ LIỆU", expanded=True):
         st.error("🚨 Dữ liệu chưa được nạp. Hãy đảm bảo `train_images`, `train_labels` và `test_images` đã được tải trước khi chạy.")
 
 
-mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
-mlflow.set_experiment("MNIST")
+# mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
+# mlflow.set_experiment("MNIST")
 # 3️⃣ HUẤN LUYỆN MÔ HÌNH
 with st.expander("📌 HUẤN LUYỆN MÔ HÌNH", expanded=True):
-    with mlflow.start_run():
+    # with mlflow.start_run():
         st.header("📌 9. Huấn luyện các mô hình phân loại")
 
         # Lựa chọn mô hình
@@ -249,19 +249,19 @@ with st.expander("📌 HUẤN LUYỆN MÔ HÌNH", expanded=True):
             max_depth = st.slider("Chọn độ sâu tối đa của cây:", min_value=1, max_value=20, value=5)
 
             if st.button("🚀 Huấn luyện mô hình"):
-                with mlflow.start_run():
+                # with mlflow.start_run():
                     dt_model = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, random_state=42)
                     dt_model.fit(X_train, y_train)
                     y_val_pred_dt = dt_model.predict(X_val)
                     accuracy_dt = accuracy_score(y_val, y_val_pred_dt)
 
-                    mlflow.log_param("model_type", "Decision Tree")
-                    mlflow.log_param("criterion", criterion)
-                    mlflow.log_param("max_depth", max_depth)
-                    mlflow.log_metric("accuracy", accuracy_dt)
+                    # mlflow.log_param("model_type", "Decision Tree")
+                    # mlflow.log_param("criterion", criterion)
+                    # mlflow.log_param("max_depth", max_depth)
+                    # mlflow.log_metric("accuracy", accuracy_dt)
 
                     # Lưu mô hình vào MLflow
-                    mlflow.sklearn.log_model(dt_model, "decision_tree_model")
+                    # mlflow.sklearn.log_model(dt_model, "decision_tree_model")
 
                     st.session_state["selected_model_type"] = "Decision Tree"
                     st.session_state["trained_model"] = dt_model 
@@ -285,19 +285,19 @@ with st.expander("📌 HUẤN LUYỆN MÔ HÌNH", expanded=True):
             C = st.slider("Chọn giá trị C (điều chỉnh mức độ regularization):", min_value=0.1, max_value=10.0, value=1.0)
 
             if st.button("🚀 Huấn luyện mô hình"):
-                with mlflow.start_run(): 
+                # with mlflow.start_run(): 
                     svm_model = SVC(kernel=kernel, C=C, random_state=42)
                     svm_model.fit(X_train, y_train)
                     y_val_pred_svm = svm_model.predict(X_val)
                     accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
 
-                    mlflow.log_param("model_type", "SVM")
-                    mlflow.log_param("kernel", kernel)
-                    mlflow.log_param("C_value", C)
-                    mlflow.log_metric("accuracy", accuracy_svm)
+                    # mlflow.log_param("model_type", "SVM")
+                    # mlflow.log_param("kernel", kernel)
+                    # mlflow.log_param("C_value", C)
+                    # mlflow.log_metric("accuracy", accuracy_svm)
 
                         # Lưu mô hình vào MLflow
-                    mlflow.sklearn.log_model(svm_model, "svm_model")
+                    # mlflow.sklearn.log_model(svm_model, "svm_model")
 
                     st.session_state["selected_model_type"] = "SVM"
                     st.session_state["trained_model"] = svm_model  
@@ -358,14 +358,14 @@ with st.expander("📌 ĐÁNH GIÁ MÔ HÌNH", expanded=True):
         test_accuracy = accuracy_score(y_test, y_test_pred)
         st.session_state["test_accuracy"] = test_accuracy
         st.write(f"✅ **Độ chính xác trên tập kiểm tra:** `{test_accuracy:.4f}`")
-        with mlflow.start_run():
-            mlflow.log_param("selected_model", best_model_name)
-            mlflow.log_metric("test_accuracy", test_accuracy)  # Log accuracy trên test set
+        # with mlflow.start_run():
+        #     mlflow.log_param("selected_model", best_model_name)
+        #     mlflow.log_metric("test_accuracy", test_accuracy)  # Log accuracy trên test set
 
             # Lưu Confusion Matrix vào file ảnh
-            confusion_matrix_path = "confusion_matrix.png"
-            fig.savefig(confusion_matrix_path)
-            mlflow.log_artifact(confusion_matrix_path)  # Log ảnh vào MLflow
+        confusion_matrix_path = "confusion_matrix.png"
+        fig.savefig(confusion_matrix_path)
+            # mlflow.log_artifact(confusion_matrix_path)  # Log ảnh vào MLflow
         st.markdown(
         """
         ### 📈 Tổng kết:
