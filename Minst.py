@@ -16,7 +16,14 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report, ConfusionMatrixDisplay
 from PIL import Image
 from collections import Counter
+import toml
+import mlflow
+# ========== PHẦN QUAN TRỌNG: LẤY THÔNG TIN TỪ STREAMLIT SECRETS ==========
+os.environ["MLFLOW_TRACKING_USERNAME"] = st.secrets["mlflow"]["MLFLOW_TRACKING_USERNAME"]
+os.environ["MLFLOW_TRACKING_PASSWORD"] = st.secrets["mlflow"]["MLFLOW_TRACKING_PASSWORD"]
 
+mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
+mlflow.set_experiment("MNIST")
 
 @st.cache_data  # Lưu cache để tránh load lại dữ liệu mỗi lần chạy lại Streamlit
 def get_sampled_pixels(images, sample_size=100_000):
@@ -42,8 +49,8 @@ def load_mnist_labels(filename):
     return labels
 
 # Định nghĩa đường dẫn đến các file MNIST
-# dataset_path = r"C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
-dataset_path = os.path.dirname(os.path.abspath(__file__))
+dataset_path = r"C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
+
 train_images_path = os.path.join(dataset_path, "train-images.idx3-ubyte")
 train_labels_path = os.path.join(dataset_path, "train-labels.idx1-ubyte")
 test_images_path = os.path.join(dataset_path, "t10k-images.idx3-ubyte")
@@ -85,9 +92,11 @@ with st.expander("🖼️ Dữ liệu ban đầu", expanded=True):
 
     st.subheader("📌***3. Hiển thị số lượng mẫu của từng chữ số từ 0 đến 9 trong tập huấn luyện**")
     label_counts = pd.Series(train_labels).value_counts().sort_index()
-    # Hiển thị biểu đồ cột
-    st.subheader("📊 Biểu đồ số lượng mẫu của từng chữ số")
-    st.bar_chart(label_counts)
+
+    # # Hiển thị biểu đồ cột
+    # st.subheader("📊 Biểu đồ số lượng mẫu của từng chữ số")
+    # st.bar_chart(label_counts)
+
     # Hiển thị bảng dữ liệu dưới biểu đồ
     st.subheader("📋 Số lượng mẫu cho từng chữ số")
     df_counts = pd.DataFrame({"Chữ số": label_counts.index, "Số lượng mẫu": label_counts.values})
@@ -111,12 +120,7 @@ with st.expander("🖼️ Dữ liệu ban đầu", expanded=True):
     st.write("🔍 Hình dạng tập huấn luyện:", train_images.shape)
     st.write("🔍 Hình dạng tập kiểm tra:", test_images.shape)
 
-    st.subheader("📌***6. Kiểm tra xem có giá trị NaN và phù hợp trong phạm vi không***")
-    # Kiểm tra xem có giá trị NaN không
-    if np.isnan(train_images).any() or np.isnan(test_images).any():
-        st.error("⚠️ Cảnh báo: Dữ liệu chứa giá trị NaN!")
-    else:
-        st.success("✅ Không có giá trị NaN trong dữ liệu.")
+    st.subheader("📌***6. Kiểm tra xem có giá trị không phù hợp trong phạm vi không***")
 
     # Kiểm tra xem có giá trị pixel nào ngoài phạm vi 0-255 không
     if (train_images.min() < 0) or (train_images.max() > 255):
@@ -173,144 +177,242 @@ with st.expander("🖼️ Dữ liệu ban đầu", expanded=True):
     )
 
 
-# 🖼️ XỬ LÝ DỮ LIỆU
 with st.expander("🖼️ XỬ LÝ DỮ LIỆU", expanded=True):
     st.header("📌 8. Xử lý dữ liệu và chuẩn bị huấn luyện")
 
-    # Chuyển đổi dữ liệu thành vector 1 chiều
-    X_train = train_images.reshape(train_images.shape[0], -1)
-    X_test = test_images.reshape(test_images.shape[0], -1)
+    # Kiểm tra nếu dữ liệu đã được load
+    if 'train_images' in globals() and 'train_labels' in globals() and 'test_images' in globals():
+        # Chuyển đổi dữ liệu thành vector 1 chiều
+        X_train = train_images.reshape(train_images.shape[0], -1)
+        X_test = test_images.reshape(test_images.shape[0], -1)
+        y_test = test_labels
+        # Cho phép người dùng chọn tỷ lệ validation
+        val_size = st.slider("🔹 Chọn tỷ lệ tập validation (%)", min_value=10, max_value=50, value=20, step=5) / 100
 
-    # Chia tập train thành train/validation (80% - 20%)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, train_labels, test_size=0.2, random_state=42)
+        # Chia tập train thành train/validation theo tỷ lệ đã chọn
+        X_train, X_val, y_train, y_val = train_test_split(X_train, train_labels, test_size=val_size, random_state=42)
 
-    st.write("✅ Dữ liệu đã được xử lý và chia tách.")
-    st.write(f"🔹 Kích thước tập huấn luyện: `{X_train.shape}`")
-    st.write(f"🔹 Kích thước tập validation: `{X_val.shape}`")
-    st.write(f"🔹 Kích thước tập kiểm tra: `{X_test.shape}`")
+        st.write("✅ Dữ liệu đã được xử lý và chia tách.")
+        st.write(f"🔹 Kích thước tập huấn luyện: `{X_train.shape}`")
+        st.write(f"🔹 Kích thước tập validation: `{X_val.shape}`")
+        st.write(f"🔹 Kích thước tập kiểm tra: `{X_test.shape}`")
 
-    # Biểu đồ phân phối nhãn dữ liệu
-    fig, ax = plt.subplots(figsize=(6, 4))
-    sns.barplot(x=list(Counter(y_train).keys()), y=list(Counter(y_train).values()), palette="Blues", ax=ax)
-    ax.set_title("Phân phối nhãn trong tập huấn luyện")
-    ax.set_xlabel("Nhãn")
-    ax.set_ylabel("Số lượng")
-    st.pyplot(fig)
-    st.markdown(
-    """
-    ### 📊 Mô tả biểu đồ  
-    Biểu đồ cột hiển thị **phân phối nhãn** trong tập huấn luyện.  
-    - **Trục hoành (x-axis):** Biểu diễn các nhãn (labels) từ `0` đến `9`.  
-    - **Trục tung (y-axis):** Thể hiện **số lượng mẫu dữ liệu** tương ứng với mỗi nhãn.  
+        # Biểu đồ phân phối nhãn dữ liệu
+        fig, ax = plt.subplots(figsize=(6, 4))
+        sns.barplot(x=list(Counter(y_train).keys()), y=list(Counter(y_train).values()), palette="Blues", ax=ax)
+        ax.set_title("Phân phối nhãn trong tập huấn luyện")
+        ax.set_xlabel("Nhãn")
+        ax.set_ylabel("Số lượng")
+        st.pyplot(fig)
 
-    ### 🔍 Giải thích  
-    - Biểu đồ giúp ta quan sát số lượng mẫu của từng nhãn trong tập huấn luyện.  
-    - Mỗi thanh (cột) có màu sắc khác nhau: **xanh nhạt đến xanh đậm**, đại diện cho số lượng dữ liệu của từng nhãn.  
-    - Một số nhãn có số lượng mẫu nhiều hơn hoặc ít hơn, điều này có thể gây ảnh hưởng đến độ chính xác của mô hình nếu dữ liệu không cân bằng.  
-  
-    """
-    )
+        st.markdown(
+        """
+        ### 📊 Mô tả biểu đồ  
+        Biểu đồ cột hiển thị **phân phối nhãn** trong tập huấn luyện.  
+        - **Trục hoành (x-axis):** Biểu diễn các nhãn (labels) từ `0` đến `9`.  
+        - **Trục tung (y-axis):** Thể hiện **số lượng mẫu dữ liệu** tương ứng với mỗi nhãn.  
+
+        ### 🔍 Giải thích  
+        - Biểu đồ giúp ta quan sát số lượng mẫu của từng nhãn trong tập huấn luyện.  
+        - Mỗi thanh (cột) có màu sắc khác nhau: **xanh nhạt đến xanh đậm**, đại diện cho số lượng dữ liệu của từng nhãn.  
+        - Một số nhãn có số lượng mẫu nhiều hơn hoặc ít hơn, điều này có thể gây ảnh hưởng đến độ chính xác của mô hình nếu dữ liệu không cân bằng.  
+        """
+        )
+    else:
+        st.error("🚨 Dữ liệu chưa được nạp. Hãy đảm bảo `train_images`, `train_labels` và `test_images` đã được tải trước khi chạy.")
 
 
-
-
-# 2️⃣ HUẤN LUYỆN CÁC MÔ HÌNH
+mlflow.set_tracking_uri(st.secrets["mlflow"]["MLFLOW_TRACKING_URI"])
+mlflow.set_experiment("MNIST")
+# 3️⃣ HUẤN LUYỆN MÔ HÌNH
 with st.expander("📌 HUẤN LUYỆN MÔ HÌNH", expanded=True):
     st.header("📌 9. Huấn luyện các mô hình phân loại")
 
-    # Decision Tree Classifier
-    st.subheader("🌳 Decision Tree Classifier")
-    dt_model = DecisionTreeClassifier(random_state=42)
-    dt_model.fit(X_train, y_train)
-    y_val_pred_dt = dt_model.predict(X_val)
-    accuracy_dt = accuracy_score(y_val, y_val_pred_dt)
-    st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_dt:.4f}`")
+    # Lựa chọn mô hình
+    model_option = st.radio("🔹 Chọn mô hình huấn luyện:", ("Decision Tree", "SVM"))
 
-    # SVM Classifier
-    st.subheader("🌀 Support Vector Machine (SVM)")
-    svm_model = SVC(kernel="linear", random_state=42)
-    svm_model.fit(X_train, y_train)
-    y_val_pred_svm = svm_model.predict(X_val)
-    accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
-    st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_svm:.4f}`")
+    if model_option == "Decision Tree":
+        st.subheader("🌳 Decision Tree Classifier")
+        
+        # Lựa chọn tham số cho Decision Tree
+        criterion = st.selectbox("Chọn tiêu chí phân nhánh:", ["gini", "entropy"])
+        max_depth = st.slider("Chọn độ sâu tối đa của cây:", min_value=1, max_value=20, value=5)
 
-    # So sánh độ chính xác giữa Decision Tree và SVM
-    fig, ax = plt.subplots(figsize=(6, 4))
-    models = ["Decision Tree", "SVM"]
-    accuracies = [accuracy_dt, accuracy_svm]
-    sns.barplot(x=models, y=accuracies, palette="coolwarm", ax=ax)
-    ax.set_ylim(0, 1)
-    ax.set_title("So sánh độ chính xác trên tập validation")
-    ax.set_ylabel("Accuracy")
-    st.pyplot(fig)
-    st.markdown(
-    """
-    ### 🔍 Nhận xét:
-    - ✅ **Mô hình SVM có độ chính xác cao hơn** so với Decision Tree.
-    - 📊 **Decision Tree**: Độ chính xác khoảng **85%**.
-    - 📈 **SVM**: Độ chính xác gần **95%**.
-    - 🚀 Điều này cho thấy **SVM hoạt động tốt hơn** trên tập validation, có thể do khả năng tổng quát hóa tốt hơn so với Decision Tree.
-    """
-    )
+        if st.button("🚀 Huấn luyện mô hình"):
+            with mlflow.start_run():
+                dt_model = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, random_state=42)
+                dt_model.fit(X_train, y_train)
+                y_val_pred_dt = dt_model.predict(X_val)
+                accuracy_dt = accuracy_score(y_val, y_val_pred_dt)
 
+                mlflow.log_param("model_type", "Decision Tree")
+                mlflow.log_param("criterion", criterion)
+                mlflow.log_param("max_depth", max_depth)
+                mlflow.log_metric("accuracy", accuracy_dt)
+
+                # Lưu mô hình vào MLflow
+                mlflow.sklearn.log_model(dt_model, "decision_tree_model")
+
+                st.session_state["selected_model_type"] = "Decision Tree"
+                st.session_state["trained_model"] = dt_model 
+                st.session_state["X_train"] = X_train   
+
+                st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_dt:.4f}`")
+
+                # Hiển thị kết quả bằng biểu đồ
+                fig, ax = plt.subplots(figsize=(6, 4))
+                sns.barplot(x=["Decision Tree"], y=[accuracy_dt], palette="Blues", ax=ax)
+                ax.set_ylim(0, 1)
+                ax.set_title("Độ chính xác của Decision Tree")
+                ax.set_ylabel("Accuracy")
+                st.pyplot(fig)
+
+        elif model_option == "SVM":
+            st.subheader("🌀 Support Vector Machine (SVM)")
+            
+            # Lựa chọn tham số cho SVM
+            kernel = st.selectbox("Chọn kernel:", ["linear", "poly", "rbf", "sigmoid"])
+            C = st.slider("Chọn giá trị C (điều chỉnh mức độ regularization):", min_value=0.1, max_value=10.0, value=1.0)
+
+            if st.button("🚀 Huấn luyện mô hình"):
+                with mlflow.start_run(): 
+                    svm_model = SVC(kernel=kernel, C=C, random_state=42)
+                    svm_model.fit(X_train, y_train)
+                    y_val_pred_svm = svm_model.predict(X_val)
+                    accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
+
+                    mlflow.log_param("model_type", "SVM")
+                    mlflow.log_param("kernel", kernel)
+                    mlflow.log_param("C_value", C)
+                    mlflow.log_metric("accuracy", accuracy_svm)
+
+                    # Lưu mô hình vào MLflow
+                    mlflow.sklearn.log_model(svm_model, "svm_model")
+
+                    st.session_state["selected_model_type"] = "SVM"
+                    st.session_state["trained_model"] = svm_model  
+                    st.session_state["X_train"] = X_train
+
+                    st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_svm:.4f}`")
+
+                    # Hiển thị kết quả bằng biểu đồ
+                    fig, ax = plt.subplots(figsize=(6, 4))
+                    sns.barplot(x=["SVM"], y=[accuracy_svm], palette="Reds", ax=ax)
+                    ax.set_ylim(0, 1)
+                    ax.set_title("Độ chính xác của SVM")
+                    ax.set_ylabel("Accuracy")
+                    st.pyplot(fig)
 
 
 # 3️⃣ ĐÁNH GIÁ MÔ HÌNH
 with st.expander("📌 ĐÁNH GIÁ MÔ HÌNH", expanded=True):
     st.header("📌 10. Đánh giá mô hình bằng Confusion Matrix")
 
-    # Chọn mô hình tốt nhất
-    best_model = dt_model if accuracy_dt > accuracy_svm else svm_model
-    best_model_name = "Decision Tree" if accuracy_dt > accuracy_svm else "SVM"
-
-    st.write(f"🏆 **Mô hình có độ chính xác cao nhất trên validation:** `{best_model_name}`")
-
-    # Dự đoán trên tập kiểm tra
-    y_test_pred = best_model.predict(X_test)
-
-    # Confusion Matrix
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ConfusionMatrixDisplay.from_predictions(test_labels, y_test_pred, cmap="Blues", ax=ax)
-    ax.set_title("Confusion Matrix trên tập kiểm tra")
-    st.pyplot(fig)
-    st.markdown(
-    """
-    ### 📌 Giải thích hình ảnh:
-    - **Trục hoành (x-axis):** Nhãn dự đoán của mô hình (**Predicted label**).
-    - **Trục tung (y-axis):** Nhãn thực tế (**True label**).
-    - **Các ô màu xanh đậm:** Số lượng mẫu được mô hình phân loại đúng.
-    - **Các ô nhạt hơn:** Số lượng mẫu bị dự đoán sai thành một nhãn khác.
-    
-    ### 🔍 Ý nghĩa quan trọng:
-    - **Các số trên đường chéo chính** (từ trên trái xuống dưới phải) đại diện cho số lượng dự đoán đúng của mô hình cho từng nhãn.
-    - **Các số ngoài đường chéo** là những mẫu bị phân loại sai.
-    - **Ô màu xanh đậm nhất** (ví dụ: ô `[1,1]` với giá trị `1119`) có nghĩa là mô hình dự đoán đúng `1119` mẫu thuộc lớp `1`.
-    - **Ô `[5,3]` có giá trị `38`** → Mô hình nhầm `38` mẫu của lớp `5` thành lớp `3`.
-    """
-)
-
      
-# 4️⃣ DEMO DỰ ĐOÁN TRÊN 10 ẢNH KIỂM TRA
-with st.expander("📌 DEMO DỰ ĐOÁN", expanded=True):
-    st.header("📌 11. Demo dự đoán trên ảnh kiểm tra")
+    # Kiểm tra xem mô hình nào đã được huấn luyện
+    if "selected_model_type" not in st.session_state or "trained_model" not in st.session_state:
+        st.warning("⚠️ Chưa có mô hình nào được huấn luyện. Vui lòng huấn luyện ít nhất một mô hình trước khi đánh giá.")
+    else:
+        # Lấy mô hình đã được huấn luyện
+        best_model_name = st.session_state.selected_model_type  
+        best_model = st.session_state.trained_model  
 
-    num_demo_images = 10
-    random_indices = np.random.choice(len(X_test), num_demo_images, replace=False)
+        st.write(f"🏆 **Mô hình được chọn để đánh giá:** `{best_model_name}`")
 
-    fig, axes = plt.subplots(1, num_demo_images, figsize=(15, 5))
+        # Hiển thị các tham số đã sử dụng trong quá trình huấn luyện
+        if best_model_name == "Decision Tree":
+            criterion = st.session_state.get("dt_criterion", "gini")
+            max_depth = st.session_state.get("dt_max_depth", None)
+            st.write("🔹 **Tham số mô hình:**")
+            st.write(f"- Tiêu chí phân nhánh: `{criterion}`")
+            st.write(f"- Độ sâu tối đa: `{max_depth}`")
 
-    for ax, idx in zip(axes, random_indices):
-        ax.imshow(test_images[idx], cmap="gray")
-        ax.axis("off")
-        ax.set_title(f"Dự đoán: {best_model.predict(X_test[idx].reshape(1, -1))[0]}")
+        elif best_model_name == "SVM":
+            kernel = st.session_state.get("svm_kernel", "linear")
+            C = st.session_state.get("svm_C", 1.0)
+            st.write("🔹 **Tham số mô hình:**")
+            st.write(f"- Kernel: `{kernel}`")
+            st.write(f"- C (Regularization): `{C}`")
 
-    st.pyplot(fig)
+        # Dự đoán trên tập kiểm tra
+        y_test_pred = best_model.predict(X_test)
+        st.session_state["y_test_pred"] = y_test_pred
+
+        # Confusion Matrix
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ConfusionMatrixDisplay.from_predictions(y_test, y_test_pred, cmap="Blues", ax=ax)
+        ax.set_title(f"Confusion Matrix của {best_model_name} trên tập kiểm tra")
+        st.pyplot(fig)
+
+        # Hiển thị độ chính xác
+        test_accuracy = accuracy_score(y_test, y_test_pred)
+        st.session_state["test_accuracy"] = test_accuracy
+        st.write(f"✅ **Độ chính xác trên tập kiểm tra:** `{test_accuracy:.4f}`")
+        with mlflow.start_run():
+            mlflow.log_param("selected_model", best_model_name)
+            mlflow.log_metric("test_accuracy", test_accuracy)  # Log accuracy trên test set
+
+            # Lưu Confusion Matrix vào file ảnh
+            confusion_matrix_path = "confusion_matrix.png"
+            fig.savefig(confusion_matrix_path)
+            mlflow.log_artifact(confusion_matrix_path)  # Log ảnh vào MLflow
+        st.markdown(
+        """
+        ### 📈 Tổng kết:
+        - 🚀 **Mô hình có thể hoạt động tốt hoặc cần cải thiện** dựa vào độ chính xác trên tập kiểm tra.
+        - 📊 **Quan sát ma trận nhầm lẫn** để xem nhãn nào hay bị nhầm lẫn nhất.
+        - 🔍 **Có thể cần điều chỉnh tham số hoặc dùng mô hình khác** nếu độ chính xác chưa đủ cao.
+        """
+        )
+     
+with st.expander("📌DỰ ĐOÁN KẾT QUẢ", expanded=True):
+    st.header("📌 11. Dự đoán trên ảnh do người dùng tải lên")
+
+    # Kiểm tra xem mô hình đã được huấn luyện và lưu kết quả chưa
+    if "selected_model_type" not in st.session_state or "trained_model" not in st.session_state:
+        st.warning("⚠️ Chưa có mô hình nào được huấn luyện. Vui lòng huấn luyện mô hình trước khi dự đoán.")
+    else:
+        best_model_name = st.session_state.selected_model_type
+        best_model = st.session_state.trained_model
+
+        st.write(f"🎯 **Mô hình đang sử dụng:** `{best_model_name}`")
+        st.write(f"✅ **Độ chính xác trên tập kiểm tra:** `{st.session_state.get('test_accuracy', 'N/A'):.4f}`")
+
+        # Cho phép người dùng tải lên ảnh
+        uploaded_file = st.file_uploader("📂 Chọn một ảnh để dự đoán", type=["png", "jpg", "jpeg"])
+
+        if uploaded_file is not None:
+            # Đọc ảnh từ tệp tải lên
+            image = Image.open(uploaded_file).convert("L")  # Chuyển sang ảnh xám
+            image = np.array(image)
+
+            # Kiểm tra xem dữ liệu huấn luyện đã lưu trong session_state hay chưa
+            if "X_train" in st.session_state:
+                X_train_shape = st.session_state["X_train"].shape[1]  # Lấy số đặc trưng từ tập huấn luyện
+
+                # Resize ảnh về kích thước phù hợp với mô hình đã huấn luyện
+                image = cv2.resize(image, (28, 28))  # Cập nhật kích thước theo dữ liệu ban đầu
+                image = image.reshape(1, -1)  # Chuyển về vector 1 chiều
+
+                # Đảm bảo số chiều đúng với dữ liệu huấn luyện
+                if image.shape[1] == X_train_shape:
+                    prediction = best_model.predict(image)[0]
+
+                    # Hiển thị ảnh và kết quả dự đoán
+                    st.image(uploaded_file, caption="📷 Ảnh bạn đã tải lên", use_container_width=True)
+                    st.success(f"✅ **Dự đoán:** {prediction}")
+                else:
+                    st.error(f"🚨 Ảnh không có số đặc trưng đúng ({image.shape[1]} thay vì {X_train_shape}). Hãy kiểm tra lại dữ liệu đầu vào!")
+            else:
+                st.error("🚨 Dữ liệu huấn luyện không tìm thấy. Hãy huấn luyện mô hình trước khi dự đoán.")
 
 
-
-
-
+st.markdown("---")
+# if st.button("Mở MLflow UI"):
+#         mlflow_url = "https://dagshub.com/huykibo/streamlit_mlflow.mlflow/#/experiments/0"
+#         st.markdown(f'**[Click vào đây để mở MLflow UI]({mlflow_url})**')
 
 
 
 # # # cd "C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
+
