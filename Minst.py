@@ -267,41 +267,41 @@ with st.expander("📌 HUẤN LUYỆN MÔ HÌNH", expanded=True):
                 ax.set_ylabel("Accuracy")
                 st.pyplot(fig)
 
-        elif model_option == "SVM":
-            st.subheader("🌀 Support Vector Machine (SVM)")
+    elif model_option == "SVM":
+        st.subheader("🌀 Support Vector Machine (SVM)")
             
             # Lựa chọn tham số cho SVM
-            kernel = st.selectbox("Chọn kernel:", ["linear", "poly", "rbf", "sigmoid"])
-            C = st.slider("Chọn giá trị C (điều chỉnh mức độ regularization):", min_value=0.1, max_value=10.0, value=1.0)
+        kernel = st.selectbox("Chọn kernel:", ["linear", "poly", "rbf", "sigmoid"])
+        C = st.slider("Chọn giá trị C (điều chỉnh mức độ regularization):", min_value=0.1, max_value=10.0, value=1.0)
 
-            if st.button("🚀 Huấn luyện mô hình"):
-                with mlflow.start_run(): 
-                    svm_model = SVC(kernel=kernel, C=C, random_state=42)
-                    svm_model.fit(X_train, y_train)
-                    y_val_pred_svm = svm_model.predict(X_val)
-                    accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
+        if st.button("🚀 Huấn luyện mô hình"):
+            with mlflow.start_run(): 
+                svm_model = SVC(kernel=kernel, C=C, random_state=42)
+                svm_model.fit(X_train, y_train)
+                y_val_pred_svm = svm_model.predict(X_val)
+                accuracy_svm = accuracy_score(y_val, y_val_pred_svm)
 
-                    mlflow.log_param("model_type", "SVM")
-                    mlflow.log_param("kernel", kernel)
-                    mlflow.log_param("C_value", C)
-                    mlflow.log_metric("accuracy", accuracy_svm)
+                mlflow.log_param("model_type", "SVM")
+                mlflow.log_param("kernel", kernel)
+                mlflow.log_param("C_value", C)
+                mlflow.log_metric("accuracy", accuracy_svm)
 
                     # Lưu mô hình vào MLflow
-                    mlflow.sklearn.log_model(svm_model, "svm_model")
+                mlflow.sklearn.log_model(svm_model, "svm_model")
 
-                    st.session_state["selected_model_type"] = "SVM"
-                    st.session_state["trained_model"] = svm_model  
-                    st.session_state["X_train"] = X_train
+                st.session_state["selected_model_type"] = "SVM"
+                st.session_state["trained_model"] = svm_model  
+                st.session_state["X_train"] = X_train
 
-                    st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_svm:.4f}`")
+                st.write(f"✅ **Độ chính xác trên tập validation:** `{accuracy_svm:.4f}`")
 
                     # Hiển thị kết quả bằng biểu đồ
-                    fig, ax = plt.subplots(figsize=(6, 4))
-                    sns.barplot(x=["SVM"], y=[accuracy_svm], palette="Reds", ax=ax)
-                    ax.set_ylim(0, 1)
-                    ax.set_title("Độ chính xác của SVM")
-                    ax.set_ylabel("Accuracy")
-                    st.pyplot(fig)
+                fig, ax = plt.subplots(figsize=(6, 4))
+                sns.barplot(x=["SVM"], y=[accuracy_svm], palette="Reds", ax=ax)
+                ax.set_ylim(0, 1)
+                ax.set_title("Độ chính xác của SVM")
+                ax.set_ylabel("Accuracy")
+                st.pyplot(fig)
 
 
 # 3️⃣ ĐÁNH GIÁ MÔ HÌNH
