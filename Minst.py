@@ -55,6 +55,7 @@ os.environ["MLFLOW_TRACKING_PASSWORD"] = mlflow_password
 mlflow.set_tracking_uri(mlflow_tracking_uri)
 
 
+
 # Định nghĩa đường dẫn đến các file MNIST
 # dataset_path = r"C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
 dataset_path = os.path.dirname(os.path.abspath(__file__)) 
@@ -409,8 +410,8 @@ with st.expander("📌DỰ ĐOÁN KẾT QUẢ", expanded=True):
                 st.error("🚨 Dữ liệu huấn luyện không tìm thấy. Hãy huấn luyện mô hình trước khi dự đoán.")
 
 
-
-print("🚀 MLflow logging thành công trên DagsHub!")
+st.write(f"MLflow Tracking URI: {mlflow.get_tracking_uri()}")
+print("🎯 Kiểm tra trên DagsHub: https://dagshub.com/Dung2204/MINST.mlflow/")
 # # # cd "C:\Users\Dell\OneDrive\Pictures\Documents\Code\python\OpenCV\HMVPYTHON\BaiThucHanh3"
 
 
